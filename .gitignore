@@ -1,0 +1,36 @@
+# Virtual Environment
+venv/
+env/
+.env
+
+# Python/Django
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Static files
+staticfiles/
+public/media/
+media/
+
+# Node/Next.js (if package is in root)
+node_modules/
+.next/
+out/
+build/
+dist/
+.npm/
+
+# IDE/OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*~
