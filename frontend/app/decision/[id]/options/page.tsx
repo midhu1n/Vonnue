@@ -4,14 +4,15 @@ import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ArrowRight, Plus } from "lucide-react"
+import { ArrowRight, Plus, Edit2, Trash2 } from "lucide-react"
 import {
     Table,
     TableBody,
-    TableCell,
-    TableHead,
+    Cell,
+    Column,
+    Row,
     TableHeader,
-    TableRow,
+    ResizableTableContainer,
 } from "@/components/ui/table"
 
 interface Option {
@@ -33,6 +34,7 @@ export default function OptionsPage() {
     const [newOption, setNewOption] = useState("")
     const [loading, setLoading] = useState(false)
     const [decision, setDecision] = useState<Decision | null>(null)
+    const [editingId, setEditingId] = useState<string | null>(null)
 
     useEffect(() => {
         const fetchDecision = async () => {
@@ -83,6 +85,40 @@ export default function OptionsPage() {
         }
     }
 
+    const updateOptionLocal = (id: string, newTitle: string) => {
+        setOptions(options.map(o => o.id === id ? { ...o, title: newTitle } : o))
+    }
+
+    const saveOption = async (id: string) => {
+        const opt = options.find(o => o.id === id)
+        if (!opt?.title.trim()) {
+            alert("Option name is required.")
+            return
+        }
+        try {
+            await fetch(`/api/options/${id}/`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title: opt.title })
+            })
+        } catch (error) {
+            console.error(error)
+        }
+        setEditingId(null)
+    }
+
+    const removeOption = async (id: string) => {
+        try {
+            await fetch(`/api/options/${id}/`, {
+                method: "DELETE"
+            })
+            setOptions(options.filter(o => o.id !== id))
+            if (editingId === id) setEditingId(null)
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
     const placeholder = "Enter your choice here"
 
     return (
@@ -96,7 +132,7 @@ export default function OptionsPage() {
                         </span>
                     </h1>
                     <p className="text-lg sm:text-xl text-gray-700 dark:text-gray-300 text-pretty max-w-2xl mx-auto leading-relaxed mb-10 px-4 font-medium">
-                        List the possibilities you are considering. We'll help you evaluate them next.
+                        List the possibilities you are considering. We&apos;ll help you evaluate them next.
                     </p>
                 </div>
 
@@ -122,40 +158,69 @@ export default function OptionsPage() {
                     </div>
 
                     <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm overflow-hidden">
-                        <Table>
-                            <TableHeader className="bg-gray-50/50 dark:bg-gray-800/50">
-                                <TableRow>
-                                    <TableHead className="w-[100px] text-center">List</TableHead>
-                                    <TableHead>Option Name</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {options.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={3} className="h-48 text-center text-gray-500">
+                        <ResizableTableContainer>
+                            <Table aria-label="Added Options">
+                                <TableHeader className="bg-gray-50/50 dark:bg-gray-800/50">
+                                    <Column isRowHeader className="w-16">#</Column>
+                                    <Column>Option Name</Column>
+                                    <Column className="w-[200px]">Actions</Column>
+                                </TableHeader>
+                                <TableBody
+                                    items={options.map(opt => ({ ...opt, _isEditing: editingId === opt.id }))}
+                                    renderEmptyState={() => (
+                                        <div className="h-48 flex items-center justify-center text-center text-gray-500">
                                             No options added yet. Start adding above!
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    options.map((option, index) => (
-                                        <TableRow key={option.id} className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
-                                            <TableCell className="text-center font-medium text-gray-500">
-                                                {index + 1}
-                                            </TableCell>
-                                            <TableCell className="font-semibold text-lg text-gray-800 dark:text-gray-200">
-                                                {option.title}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-600 hover:bg-red-50">
-                                                    Delete
-                                                </Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
+                                        </div>
+                                    )}
+                                >
+                                    {(option: Option & { _isEditing: boolean }) => {
+                                        const isEditing = option._isEditing
+                                        return (
+                                            <Row key={option.id} className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
+                                                <Cell className="font-medium text-gray-500 pl-4 w-16">
+                                                    {options.findIndex(o => o.id === option.id) + 1}
+                                                </Cell>
+                                                <Cell className="font-semibold text-lg text-gray-800 dark:text-gray-200">
+                                                    {isEditing ? (
+                                                        <Input
+                                                            value={option.title}
+                                                            onChange={(e) => updateOptionLocal(option.id, e.target.value)}
+                                                            className="h-8 max-w-sm"
+                                                            autoFocus
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    saveOption(option.id);
+                                                                }
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        option.title
+                                                    )}
+                                                </Cell>
+                                                <Cell className="w-[200px]">
+                                                    <div className="flex justify-start gap-2">
+                                                        {isEditing ? (
+                                                            <Button size="sm" onClick={(e) => { e.stopPropagation(); saveOption(option.id) }} className="h-8 bg-indigo-600 hover:bg-indigo-700 text-white">
+                                                                Save
+                                                            </Button>
+                                                        ) : (
+                                                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setEditingId(option.id) }} className="h-8 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50">
+                                                                <Edit2 className="h-4 w-4 mr-1" /> Edit
+                                                            </Button>
+                                                        )}
+                                                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); removeOption(option.id) }} className="h-8 text-red-500 hover:text-red-700 hover:bg-red-50">
+                                                            <Trash2 className="h-4 w-4 mr-1" /> Delete
+                                                        </Button>
+                                                    </div>
+                                                </Cell>
+                                            </Row>
+                                        )
+                                    }}
+                                </TableBody>
+                            </Table>
+                        </ResizableTableContainer>
                     </div>
 
                     <div className="mt-8 flex justify-end">
