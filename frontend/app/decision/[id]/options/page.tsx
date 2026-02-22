@@ -161,7 +161,7 @@ export default function OptionsPage() {
                         <ResizableTableContainer>
                             <Table aria-label="Added Options">
                                 <TableHeader className="bg-gray-50/50 dark:bg-gray-800/50">
-                                    <Column isRowHeader className="w-16">#</Column>
+                                    <Column isRowHeader className="w-16">List</Column>
                                     <Column>Option Name</Column>
                                     <Column className="w-[200px]">Actions</Column>
                                 </TableHeader>
