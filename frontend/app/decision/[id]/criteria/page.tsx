@@ -44,6 +44,7 @@ export default function CriteriaPage() {
     const [editingId, setEditingId] = useState<string | null>(null)
     const [isDetecting, setIsDetecting] = useState(false)
     const [showAddWarning, setShowAddWarning] = useState<"edit" | "empty" | null>(null)
+    const [weightWarning, setWeightWarning] = useState<string | null>(null)
 
     const addNewEmptyRow = () => {
         if (editingId) {
@@ -68,7 +69,7 @@ export default function CriteriaPage() {
 
         setIsDetecting(true)
         try {
-            const res = await fetch(`http://127.0.0.1:8000/api/ai/guess-type/`, {
+            const res = await fetch(`/api/ai/guess-type/`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ q: currentName })
@@ -144,12 +145,27 @@ export default function CriteriaPage() {
     const hasEmptyAttribute = criteria.some(c => !c.name.trim())
 
     const handleNextStep = async () => {
-        if (!isExactlyOne || editingId) return
+        if (editingId) {
+            setWeightWarning("Weight Limit Exceeded")
+            setTimeout(() => setWeightWarning(null), 4000)
+            return
+        }
+        if (totalWeight > 1.001) {
+            setWeightWarning("Weight Limit Exceeded")
+            setTimeout(() => setWeightWarning(null), 4000)
+            return
+        }
+        if (!isExactlyOne) {
+            setWeightWarning("Weight Limit Exceeded")
+            setTimeout(() => setWeightWarning(null), 4000)
+            return
+        }
+        setWeightWarning(null)
 
         try {
             // Typically, one might save all in bulk or loop. Simple loop for MVP:
             for (const c of criteria) {
-                await fetch(`http://127.0.0.1:8000/decisions/${decisionId}/criteria/`, {
+                await fetch(`/api/decisions/${decisionId}/criteria/`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
@@ -222,24 +238,26 @@ export default function CriteriaPage() {
                     <ResizableTableContainer>
                         <Table aria-label="Criteria List">
                             <TableHeader className="bg-gray-100/90 dark:bg-gray-900/90 border-b-2 border-black dark:border-white [&_.flex-1]:justify-center">
+                                <Column isRowHeader className="font-semibold w-10 text-center border-r border-gray-300 dark:border-gray-700">List</Column>
                                 <Column isRowHeader className="font-semibold w-1/3 border-r border-gray-300 dark:border-gray-700">Attribute</Column>
                                 <Column className="font-semibold border-r border-gray-300 dark:border-gray-700">Weight (0-1)</Column>
                                 <Column className="font-semibold border-r border-gray-300 dark:border-gray-700">Type Focus</Column>
                                 <Column className="text-center font-semibold">Actions</Column>
                             </TableHeader>
                             <TableBody
-                                items={criteria.map(c => ({ ...c, _isEditing: editingId === c.id, _isDetecting: isDetecting }))}
+                                items={criteria.map((c, idx) => ({ ...c, _isEditing: editingId === c.id, _isDetecting: isDetecting, _rowIndex: idx + 1 }))}
                                 renderEmptyState={() => (
                                     <div className="p-8 text-center text-gray-500">
                                         No attributes added yet. Click &quot;Add New Attribute&quot; below.
                                     </div>
                                 )}
                             >
-                                {(item: Criterion & { _isEditing: boolean, _isDetecting: boolean }) => {
+                                {(item: Criterion & { _isEditing: boolean, _isDetecting: boolean, _rowIndex: number }) => {
                                     const isEditing = item._isEditing
                                     const isDetecting = item._isDetecting
                                     return (
                                         <Row key={item.id} className="group hover:bg-gray-50/80 dark:hover:bg-gray-900/80 transition-colors border-b border-gray-300 dark:border-gray-700 last:border-b-0">
+                                            <Cell className="border-r border-gray-300 dark:border-gray-700 text-center w-10 font-mono text-sm text-muted-foreground">{item._rowIndex}</Cell>
                                             <Cell className="border-r border-gray-300 dark:border-gray-700 text-center">
                                                 {isEditing ? (
                                                     <div className="flex items-center justify-center gap-2">
@@ -356,6 +374,19 @@ export default function CriteriaPage() {
                     </div>
                 </div>
 
+                {/* Weight Warning */}
+                {weightWarning && (
+                    <div className="flex justify-center mt-1">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="px-3 py-1 rounded-full bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-700 text-rose-600 dark:text-rose-300 text-[10px] font-semibold shadow-sm"
+                        >
+                            {weightWarning}
+                        </motion.div>
+                    </div>
+                )}
+
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mb-12">
                     {/* Left: Weight Allocation Box */}
                     <div className="w-full sm:w-1/2 min-h-[90px]">
@@ -393,10 +424,11 @@ export default function CriteriaPage() {
                         </div>
                     </div>
 
+
                     {/* Right: Continue Button */}
                     <Button
                         onClick={handleNextStep}
-                        disabled={criteria.length === 0 || !!editingId || hasEmptyAttribute || !isExactlyOne}
+                        disabled={criteria.length === 0 || hasEmptyAttribute}
                         className="bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 px-8 py-4 rounded-full text-base font-bold shadow-md hover:shadow-xl transition-all self-end sm:self-center uppercase tracking-wide"
                     >
                         Continue <span className="ml-2 text-xl font-normal">→</span>

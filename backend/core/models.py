@@ -33,3 +33,15 @@ class Criterion(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.weight})"
+
+class Score(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    option = models.ForeignKey(Option, related_name='scores', on_delete=models.CASCADE)
+    criterion = models.ForeignKey(Criterion, related_name='scores', on_delete=models.CASCADE)
+    value = models.FloatField()
+
+    class Meta:
+        unique_together = ('option', 'criterion')
+
+    def __str__(self):
+        return f"{self.option.title} / {self.criterion.name} = {self.value}"

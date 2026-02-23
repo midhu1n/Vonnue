@@ -1,8 +1,8 @@
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import Decision, Option, Criterion
-from .serializers import DecisionSerializer, OptionSerializer, CriterionSerializer
+from .models import Decision, Option, Criterion, Score
+from .serializers import DecisionSerializer, OptionSerializer, CriterionSerializer, ScoreSerializer
 from .utils import get_gemini_response
 
 class DecisionCreateView(generics.CreateAPIView):
@@ -25,6 +25,35 @@ class CriterionCreateView(generics.CreateAPIView):
     queryset = Criterion.objects.all()
     serializer_class = CriterionSerializer
 
+class ScoreBulkUpsertView(APIView):
+    """
+    POST /api/decisions/<decision_id>/scores/
+    Body: [{ option, criterion, value }, ...]
+    Creates or updates each (option, criterion) score.
+    """
+    def post(self, request, decision_id, *args, **kwargs):
+        scores_data = request.data  # expect a list
+        if not isinstance(scores_data, list):
+            return Response({'error': 'Expected a list of scores.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        results = []
+        for item in scores_data:
+            option_id = item.get('option')
+            criterion_id = item.get('criterion')
+            value = item.get('value')
+
+            if option_id is None or criterion_id is None or value is None:
+                continue
+
+            score, _ = Score.objects.update_or_create(
+                option_id=option_id,
+                criterion_id=criterion_id,
+                defaults={'value': value}
+            )
+            results.append(ScoreSerializer(score).data)
+
+        return Response(results, status=status.HTTP_200_OK)
+
 class AIGuessTypeView(APIView):
     def post(self, request, *args, **kwargs):
         criterion_name = request.data.get('q', '').strip()
@@ -39,7 +68,6 @@ class AIGuessTypeView(APIView):
         
         ai_analysis = get_gemini_response(prompt)
         
-        # fallback parsing
         guessed_type = 'benefit'
         if 'cost' in ai_analysis:
             guessed_type = 'cost'
