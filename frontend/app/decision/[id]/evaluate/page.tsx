@@ -1,9 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { motion } from "framer-motion"
-import { DotPattern } from "@/components/ui/dot-pattern"
+import { motion, useMotionValue, useMotionTemplate, useAnimationFrame } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,6 +27,30 @@ interface DecisionData {
     criteria: Criterion[]
 }
 
+const GridPatternSVG = ({ offsetX, offsetY, id }: { offsetX: any; offsetY: any; id: string }) => (
+    <svg className="w-full h-full">
+        <defs>
+            <motion.pattern
+                id={id}
+                width="40"
+                height="40"
+                patternUnits="userSpaceOnUse"
+                x={offsetX}
+                y={offsetY}
+            >
+                <path
+                    d="M 40 0 L 0 0 0 40"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1"
+                    className="text-muted-foreground"
+                />
+            </motion.pattern>
+        </defs>
+        <rect width="100%" height="100%" fill={`url(#${id})`} />
+    </svg>
+)
+
 export default function ScoreInputPage() {
     const params = useParams()
     const router = useRouter()
@@ -39,6 +62,25 @@ export default function ScoreInputPage() {
     // scores: { [optionId]: { [criterionId]: value } }
     const [scores, setScores] = useState<Record<string, Record<string, string>>>({})
     const [savedRows, setSavedRows] = useState<Set<string>>(new Set())
+
+    // Infinite Grid state
+    const mouseX = useMotionValue(0)
+    const mouseY = useMotionValue(0)
+    const gridOffsetX = useMotionValue(0)
+    const gridOffsetY = useMotionValue(0)
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        const { left, top } = e.currentTarget.getBoundingClientRect()
+        mouseX.set(e.clientX - left)
+        mouseY.set(e.clientY - top)
+    }
+
+    useAnimationFrame(() => {
+        gridOffsetX.set((gridOffsetX.get() + 0.3) % 40)
+        gridOffsetY.set((gridOffsetY.get() + 0.3) % 40)
+    })
+
+    const maskImage = useMotionTemplate`radial-gradient(350px circle at ${mouseX}px ${mouseY}px, black, transparent)`
 
     useEffect(() => {
         const fetchDecision = async () => {
@@ -146,22 +188,29 @@ export default function ScoreInputPage() {
     }
 
     return (
-        <section className="relative w-full min-h-[100vh] flex flex-col items-center justify-start px-4 md:px-8 py-16 overflow-hidden bg-gradient-to-br from-background to-muted/30">
-            <DotPattern className={cn(
-                "[mask-image:radial-gradient(50vw_circle_at_center,white,transparent)]",
-            )} />
+        <section
+            onMouseMove={handleMouseMove}
+            className="relative w-full min-h-[100vh] flex flex-col items-center justify-start px-4 md:px-8 py-16 overflow-hidden bg-background"
+        >
+            {/* Infinite Grid - base layer */}
+            <div className="absolute inset-0 z-0 opacity-[0.05]">
+                <GridPatternSVG offsetX={gridOffsetX} offsetY={gridOffsetY} id="grid-base" />
+            </div>
+
+            {/* Infinite Grid - mouse-tracking reveal layer */}
             <motion.div
-                initial={{ opacity: 0, scale: 0.6 }}
-                animate={{ opacity: 0.4, scale: 1 }}
-                transition={{ duration: 1.4 }}
-                className="absolute top-[-100px] left-[-100px] w-[300px] h-[300px] bg-primary/30 blur-[120px] rounded-full z-0 pointer-events-none"
-            />
-            <motion.div
-                initial={{ opacity: 0, scale: 0.6 }}
-                animate={{ opacity: 0.3, scale: 1 }}
-                transition={{ duration: 1.6, delay: 0.3 }}
-                className="absolute bottom-[-100px] right-[-100px] w-[400px] h-[400px] bg-secondary/20 blur-[160px] rounded-full z-0 pointer-events-none"
-            />
+                className="absolute inset-0 z-0 opacity-40"
+                style={{ maskImage, WebkitMaskImage: maskImage }}
+            >
+                <GridPatternSVG offsetX={gridOffsetX} offsetY={gridOffsetY} id="grid-reveal" />
+            </motion.div>
+
+            {/* Gradient orbs */}
+            <div className="absolute inset-0 pointer-events-none z-0">
+                <div className="absolute right-[-20%] top-[-20%] w-[40%] h-[40%] rounded-full bg-orange-500/40 dark:bg-orange-600/20 blur-[120px]" />
+                <div className="absolute right-[10%] top-[-10%] w-[20%] h-[20%] rounded-full bg-primary/30 blur-[100px]" />
+                <div className="absolute left-[-10%] bottom-[-20%] w-[40%] h-[40%] rounded-full bg-blue-500/40 dark:bg-blue-600/20 blur-[120px]" />
+            </div>
 
             <div className="relative z-10 w-full max-w-6xl">
                 {/* Header */}

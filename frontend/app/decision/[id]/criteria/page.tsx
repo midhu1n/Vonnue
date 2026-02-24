@@ -57,6 +57,12 @@ export default function CriteriaPage() {
             setTimeout(() => setShowAddWarning(null), 3000)
             return
         }
+        const currentTotal = criteria.reduce((sum, c) => sum + (Number(c.weight) || 0), 0)
+        if (currentTotal >= 0.999) {
+            setWeightWarning(currentTotal > 1.001 ? "Weight allocation exceeded" : "No more weight to allocate")
+            setTimeout(() => setWeightWarning(null), 4000)
+            return
+        }
 
         const tempId = crypto.randomUUID()
         setCriteria([...criteria, { id: tempId, name: "", weight: "", type: "benefit" }])
@@ -98,6 +104,14 @@ export default function CriteriaPage() {
         const w = Number(item?.weight)
         if (isNaN(w) || w < 0 || w > 1 || item?.weight === "") {
             alert("Weight must be between 0.0 and 1.0.")
+            return
+        }
+
+        // Check if saving this weight would push total over 1.0
+        const otherWeights = criteria.reduce((sum, c) => c.id === id ? sum : sum + (Number(c.weight) || 0), 0)
+        if (otherWeights + w > 1.001) {
+            setWeightWarning("Weight allocation exceeded")
+            setTimeout(() => setWeightWarning(null), 4000)
             return
         }
 
@@ -354,7 +368,15 @@ export default function CriteriaPage() {
                         </span>
                     </Button>
                     <div className="h-10 w-full flex justify-center">
-                        {showAddWarning === "edit" ? (
+                        {weightWarning ? (
+                            <motion.div
+                                initial={{ opacity: 0, y: -5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/40 px-4 py-2 rounded-full border border-red-200 dark:border-red-800 shadow-sm animate-pulse"
+                            >
+                                ⚠ Warning: {weightWarning}
+                            </motion.div>
+                        ) : showAddWarning === "edit" ? (
                             <motion.div
                                 initial={{ opacity: 0, y: -5 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -373,19 +395,6 @@ export default function CriteriaPage() {
                         ) : null}
                     </div>
                 </div>
-
-                {/* Weight Warning */}
-                {weightWarning && (
-                    <div className="flex justify-center mt-1">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="px-3 py-1 rounded-full bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-700 text-rose-600 dark:text-rose-300 text-[10px] font-semibold shadow-sm"
-                        >
-                            {weightWarning}
-                        </motion.div>
-                    </div>
-                )}
 
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mb-12">
                     {/* Left: Weight Allocation Box */}
