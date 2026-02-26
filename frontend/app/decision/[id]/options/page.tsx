@@ -43,6 +43,7 @@ export default function OptionsPage() {
                 if (res.ok) {
                     const data = await res.json()
                     setDecision(data)
+                    setOptions(data.options || [])
                 }
             } catch (error) {
                 console.error("Failed to fetch decision details", error)
@@ -165,59 +166,63 @@ export default function OptionsPage() {
                                     <Column>Option Name</Column>
                                     <Column className="w-[200px]">Actions</Column>
                                 </TableHeader>
-                                <TableBody
-                                    items={options.map(opt => ({ ...opt, _isEditing: editingId === opt.id }))}
-                                    renderEmptyState={() => (
-                                        <div className="h-48 flex items-center justify-center text-center text-gray-500">
-                                            No options added yet. Start adding above!
-                                        </div>
-                                    )}
-                                >
-                                    {(option: Option & { _isEditing: boolean }) => {
-                                        const isEditing = option._isEditing
-                                        return (
-                                            <Row key={option.id} className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
-                                                <Cell className="font-medium text-gray-500 pl-4 w-16">
-                                                    {options.findIndex(o => o.id === option.id) + 1}
-                                                </Cell>
-                                                <Cell className="font-semibold text-lg text-gray-800 dark:text-gray-200">
-                                                    {isEditing ? (
-                                                        <Input
-                                                            value={option.title}
-                                                            onChange={(e) => updateOptionLocal(option.id, e.target.value)}
-                                                            className="h-8 max-w-sm"
-                                                            autoFocus
-                                                            onKeyDown={(e) => {
-                                                                if (e.key === 'Enter') {
-                                                                    e.preventDefault();
-                                                                    e.stopPropagation();
-                                                                    saveOption(option.id);
-                                                                }
-                                                            }}
-                                                        />
-                                                    ) : (
-                                                        option.title
-                                                    )}
-                                                </Cell>
-                                                <Cell className="w-[200px]">
-                                                    <div className="flex justify-start gap-2">
+                                <TableBody>
+                                    {options.length === 0 ? (
+                                        <Row>
+                                            <Cell className="p-8 text-center text-gray-500">
+                                                No options added yet. Start adding above!
+                                            </Cell>
+                                            <Cell>{""}</Cell>
+                                            <Cell>{""}</Cell>
+                                        </Row>
+                                    ) : (
+                                        options.map((opt, idx) => {
+                                            const option = { ...opt, _isEditing: editingId === opt.id };
+                                            const isEditing = option._isEditing;
+                                            return (
+                                                <Row key={option.id} className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
+                                                    <Cell className="font-medium text-gray-500 pl-4 w-16">
+                                                        {options.findIndex(o => o.id === option.id) + 1}
+                                                    </Cell>
+                                                    <Cell className="font-semibold text-lg text-gray-800 dark:text-gray-200">
                                                         {isEditing ? (
-                                                            <Button size="sm" onClick={(e) => { e.stopPropagation(); saveOption(option.id) }} className="h-8 bg-indigo-600 hover:bg-indigo-700 text-white">
-                                                                Save
-                                                            </Button>
+                                                            <Input
+                                                                value={option.title}
+                                                                onChange={(e) => updateOptionLocal(option.id, e.target.value)}
+                                                                className="h-8 max-w-sm"
+                                                                autoFocus
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter') {
+                                                                        e.preventDefault();
+                                                                        e.stopPropagation();
+                                                                        saveOption(option.id);
+                                                                    }
+                                                                }}
+                                                            />
                                                         ) : (
-                                                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setEditingId(option.id) }} className="h-8 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50">
-                                                                <Edit2 className="h-4 w-4 mr-1" /> Edit
-                                                            </Button>
+                                                            option.title
                                                         )}
-                                                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); removeOption(option.id) }} className="h-8 text-red-500 hover:text-red-700 hover:bg-red-50">
-                                                            <Trash2 className="h-4 w-4 mr-1" /> Delete
-                                                        </Button>
-                                                    </div>
-                                                </Cell>
-                                            </Row>
-                                        )
-                                    }}
+                                                    </Cell>
+                                                    <Cell className="w-[200px]">
+                                                        <div className="flex justify-start gap-2">
+                                                            {isEditing ? (
+                                                                <Button size="sm" onClick={(e) => { e.stopPropagation(); saveOption(option.id) }} className="h-8 bg-indigo-600 hover:bg-indigo-700 text-white">
+                                                                    Save
+                                                                </Button>
+                                                            ) : (
+                                                                <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setEditingId(option.id) }} className="h-8 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50">
+                                                                    <Edit2 className="h-4 w-4 mr-1" /> Edit
+                                                                </Button>
+                                                            )}
+                                                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); removeOption(option.id) }} className="h-8 text-red-500 hover:text-red-700 hover:bg-red-50">
+                                                                <Trash2 className="h-4 w-4 mr-1" /> Delete
+                                                            </Button>
+                                                        </div>
+                                                    </Cell>
+                                                </Row>
+                                            )
+                                        })
+                                    )}
                                 </TableBody>
                             </Table>
                         </ResizableTableContainer>

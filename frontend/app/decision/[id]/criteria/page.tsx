@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { DotPattern } from "@/components/ui/dot-pattern"
@@ -149,7 +149,27 @@ export default function CriteriaPage() {
     //     setEditingId(c.id)
     // }
 
-    const handleRemove = (id: string) => {
+    useEffect(() => {
+        const fetchCriteria = async () => {
+            try {
+                const res = await fetch(`/api/decisions/${decisionId}/`)
+                if (res.ok) {
+                    const data = await res.json()
+                    setCriteria(data.criteria || [])
+                }
+            } catch (error) {
+                console.error("Failed to fetch decision criteria", error)
+            }
+        }
+        if (decisionId) fetchCriteria()
+    }, [decisionId])
+
+    const handleRemove = async (id: string) => {
+        try {
+            await fetch(`/api/criteria/${id}/`, { method: "DELETE" })
+        } catch (err) {
+            console.error(err)
+        }
         setCriteria(criteria.filter(c => c.id !== id))
         if (editingId === id) setEditingId(null)
     }
@@ -160,7 +180,7 @@ export default function CriteriaPage() {
 
     const handleNextStep = async () => {
         if (editingId) {
-            setWeightWarning("Weight Limit Exceeded")
+            setWeightWarning("Please save your current attribute.")
             setTimeout(() => setWeightWarning(null), 4000)
             return
         }
@@ -170,28 +190,27 @@ export default function CriteriaPage() {
             return
         }
         if (!isExactlyOne) {
-            setWeightWarning("Weight Limit Exceeded")
+            setWeightWarning("Total weight must be exactly 1.00")
             setTimeout(() => setWeightWarning(null), 4000)
             return
         }
         setWeightWarning(null)
 
         try {
-            // Typically, one might save all in bulk or loop. Simple loop for MVP:
-            for (const c of criteria) {
-                await fetch(`/api/decisions/${decisionId}/criteria/`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        decision: decisionId,
-                        name: c.name,
-                        weight: Number(c.weight),
-                        type: c.type
-                    })
-                })
-            }
+            const payload = criteria.map(c => ({
+                id: c.id,
+                name: c.name,
+                weight: Number(c.weight),
+                type: c.type
+            }))
 
-            // Navigate to the next evaluation step (placeholder route)
+            await fetch(`/api/decisions/${decisionId}/criteria/bulk/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            })
+
+            // Navigate to the next evaluation step
             router.push(`/decision/${decisionId}/evaluate`)
 
         } catch (err) {

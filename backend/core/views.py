@@ -25,6 +25,38 @@ class CriterionCreateView(generics.CreateAPIView):
     queryset = Criterion.objects.all()
     serializer_class = CriterionSerializer
 
+class CriterionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Criterion.objects.all()
+    serializer_class = CriterionSerializer
+
+class CriterionBulkUpsertView(APIView):
+    def post(self, request, decision_id, *args, **kwargs):
+        criteria_data = request.data
+        if not isinstance(criteria_data, list):
+            return Response({'error': 'Expected a list of criteria.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        results = []
+        for item in criteria_data:
+            c_id = item.get('id')
+            name = item.get('name')
+            weight = item.get('weight')
+            c_type = item.get('type')
+
+            if name is None or weight is None or c_type is None:
+                continue
+
+            try:
+                crit, _ = Criterion.objects.update_or_create(
+                    id=c_id if c_id else None,
+                    decision_id=decision_id,
+                    defaults={'name': name, 'weight': weight, 'type': c_type}
+                )
+                results.append(CriterionSerializer(crit).data)
+            except Exception as e:
+                pass # Usually invalid UUID or constraint
+
+        return Response(results, status=status.HTTP_200_OK)
+
 class ScoreBulkUpsertView(APIView):
     """
     POST /api/decisions/<decision_id>/scores/

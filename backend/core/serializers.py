@@ -1,10 +1,18 @@
 from rest_framework import serializers
 from .models import Decision, Option, Criterion, Score
 
+class ScoreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Score
+        fields = ['id', 'option', 'criterion', 'value']
+        read_only_fields = ['id']
+
 class OptionSerializer(serializers.ModelSerializer):
+    scores = ScoreSerializer(many=True, read_only=True)
+
     class Meta:
         model = Option
-        fields = ['id', 'decision', 'title', 'created_at']
+        fields = ['id', 'decision', 'title', 'created_at', 'scores']
         read_only_fields = ['id', 'created_at']
 
 class CriterionSerializer(serializers.ModelSerializer):
@@ -12,12 +20,6 @@ class CriterionSerializer(serializers.ModelSerializer):
         model = Criterion
         fields = ['id', 'decision', 'name', 'weight', 'type', 'created_at']
         read_only_fields = ['id', 'created_at']
-
-class ScoreSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Score
-        fields = ['id', 'option', 'criterion', 'value']
-        read_only_fields = ['id']
 
 class DecisionSerializer(serializers.ModelSerializer):
     options = OptionSerializer(many=True, read_only=True)
