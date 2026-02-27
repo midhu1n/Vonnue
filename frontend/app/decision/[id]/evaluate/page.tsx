@@ -327,7 +327,7 @@ export default function ScoreInputPage() {
                     <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl mb-4 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-gray-200 dark:to-white">
                         Rate Your Options
                     </h1>
-                    <p className="text-lg text-muted-foreground max-w-2xl mt-2">
+                    <p className="text-lg text-muted-foreground max-w-2xl mt-2 mb-6">
                         <strong className="text-xl text-indigo-600 dark:text-indigo-400 font-bold tracking-wide">
                             Enter Values for Each Criteria.
                         </strong>
@@ -335,6 +335,11 @@ export default function ScoreInputPage() {
                             Fill in scores for each option across all attributes you defined.
                         </span>
                     </p>
+
+                    <div className="bg-indigo-50 border border-indigo-200 text-indigo-800 rounded-lg p-4 max-w-3xl text-sm md:text-base shadow-sm">
+                        <strong className="font-semibold block mb-1 text-indigo-900">💡 Tip: How to Score</strong>
+                        You can use any numeric scale for your scores (e.g., 1-10, 1-100, or exact values like $85,000). The system will automatically normalize everything. <span className="font-semibold">Just ensure you use the exact same scale for every option in a column!</span>
+                    </div>
                 </div>
 
                 {/* Score Table */}
@@ -400,18 +405,7 @@ export default function ScoreInputPage() {
                                                             min="0"
                                                             value={scores[opt.id]?.[crit.id] ?? ""}
                                                             onChange={(e) => updateScore(opt.id, crit.id, e.target.value)}
-                                                            placeholder={
-                                                                rowIdx === 0
-                                                                    ? (crit.type === "cost"
-                                                                        ? "e.g. 85000"
-                                                                        : /price/i.test(crit.name) ? "e.g. 75000"
-                                                                            : /battery/i.test(crit.name) ? "e.g. 15 hrs"
-                                                                                : /ram|memory|storage/i.test(crit.name) ? "e.g. 16 GB"
-                                                                                    : /speed|clock/i.test(crit.name) ? "e.g. 3.5 GHz"
-                                                                                        : /weight|mass/i.test(crit.name) ? "e.g. 1.4 kg"
-                                                                                            : "e.g. 8 / 10")
-                                                                    : ""
-                                                            }
+
                                                             disabled={isRowLocked}
                                                             className={`h-10 text-center font-mono text-sm border-gray-200 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500 bg-transparent w-full ${isRowLocked ? 'cursor-not-allowed bg-gray-100/50 dark:bg-gray-800/50' : ''}`}
                                                         />

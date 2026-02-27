@@ -105,3 +105,69 @@ class AIGuessTypeView(APIView):
             guessed_type = 'cost'
             
         return Response({'status': 'success', 'analysis': guessed_type})
+
+class AIOptionSuggestView(APIView):
+    def post(self, request, *args, **kwargs):
+        query = request.data.get('q', '').strip()
+        if not query:
+            return Response({'status': 'error', 'message': 'No input provided'}, status=400)
+            
+        prompt = (
+            f"Suggest 5 popular, specific, real-world options (e.g. products, models, or choices) "
+            f"that perfectly match the decision context: '{query}'. "
+            f"Pay strict attention to any constraints mentioned (e.g., budget limits like 'under 15k', specific types, or use cases). "
+            f"Only return a comma-separated list of the 5 text options. Do not include quotes, numbering, introductory text, or descriptions."
+        )
+        
+        ai_analysis = get_gemini_response(prompt)
+        
+        if ai_analysis == "error" or ai_analysis == "error: missing api key":
+             return Response({'status': 'error', 'message': 'AI service unavailable'}, status=503)
+
+        # Split and clean the results list
+        options = [opt.strip().title() for opt in ai_analysis.split(',') if opt.strip()]
+        
+        return Response({'status': 'success', 'options': options[:5]})
+
+class AIOptionSummaryView(APIView):
+    def post(self, request, *args, **kwargs):
+        decision_query = request.data.get('decision', '').strip()
+        option_name = request.data.get('option', '').strip()
+        
+        if not option_name or not decision_query:
+            return Response({'status': 'error', 'message': 'Missing decision or option input'}, status=400)
+            
+        prompt = (
+            f"Provide an ultra-fast, strictly factual summary of '{option_name}' "
+            f"in the context of: '{decision_query}'.\n"
+            f"Keep all strings as short as humanly possible to optimize generation speed.\n"
+            f"Return a strict JSON object with EXACTLY these keys:\n"
+            f"- \"price\": Current estimated price range\n"
+            f"- \"variants\": 1-5 words describing variants\n"
+            f"- \"offers\": 1-5 words describing best offer\n"
+            f"- \"features\": Array of 3 short bullet points\n"
+            f"- \"pros_cons\": Array of 2 very brief pros/cons\n"
+            f"ONLY output valid JSON without any markdown formatting."
+        )
+        
+        ai_analysis = get_gemini_response(prompt)
+        
+        if ai_analysis == "error" or ai_analysis == "error: missing api key":
+             return Response({'status': 'error', 'message': 'AI service unavailable'}, status=503)
+
+        try:
+            import json
+            # Clean up potential markdown code block markers
+            cleaned_json = ai_analysis.strip()
+            if cleaned_json.startswith("```json"):
+                cleaned_json = cleaned_json[7:]
+            if cleaned_json.startswith("```"):
+                cleaned_json = cleaned_json[3:]
+            if cleaned_json.endswith("```"):
+                cleaned_json = cleaned_json[:-3]
+                
+            parsed_data = json.loads(cleaned_json.strip())
+            return Response({'status': 'success', 'summary': parsed_data})
+        except Exception as e:
+            # Fallback if json parsing fails
+            return Response({'status': 'success', 'summary': {'features': [ai_analysis], 'price': 'N/A', 'variants': 'N/A', 'offers': 'N/A', 'pros_cons': []}})

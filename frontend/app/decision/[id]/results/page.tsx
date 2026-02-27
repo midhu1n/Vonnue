@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Download, Info } from "lucide-react"
+import { ArrowLeft, Download, Info, X } from "lucide-react"
 
 interface Score {
     id: string
@@ -46,6 +46,7 @@ export default function ResultsPage() {
     const [decision, setDecision] = useState<DecisionData | null>(null)
     const [evaluatedOptions, setEvaluatedOptions] = useState<EvaluatedOption[]>([])
     const [loading, setLoading] = useState(true)
+    const [calculationModal, setCalculationModal] = useState<EvaluatedOption | null>(null)
 
     useEffect(() => {
         if (!decisionId) return
@@ -278,8 +279,15 @@ export default function ResultsPage() {
                                     <td className="p-4 md:p-6 font-bold text-center text-white/80">
                                         {idx + 1}
                                     </td>
-                                    <td className="p-4 md:p-6 font-semibold text-white flex items-center gap-3">
-                                        {opt.title}
+                                    <td className="p-4 md:p-6 font-semibold text-white">
+                                        <div className="flex flex-col gap-1.5 items-start">
+                                            <span>{opt.title}</span>
+                                            {idx === 0 && (
+                                                <span className="text-xs text-green-400 font-bold flex items-center">
+                                                    (Recommended)
+                                                </span>
+                                            )}
+                                        </div>
                                     </td>
                                     {decision.criteria.map(crit => (
                                         <td key={crit.id} className="p-4 md:p-6 text-white/80">
@@ -287,16 +295,18 @@ export default function ResultsPage() {
                                         </td>
                                     ))}
                                     <td className="p-4 md:p-6 font-mono text-sm text-white/60">
-                                        {decision.criteria.map((crit, cIdx) => (
-                                            <span key={crit.id}>
-                                                ({opt.normalizedScores[crit.id].toFixed(2)} &times; {crit.weight})
-                                                {cIdx < decision.criteria.length - 1 ? " + " : " "}
-                                            </span>
-                                        ))}
-                                        ={" "}
-                                        <strong className="text-white text-base bg-white/10 px-2 py-1 rounded">
-                                            {opt.totalScore.toFixed(3)}
-                                        </strong>
+                                        <div className="flex items-center gap-3">
+                                            <strong className="text-white text-base">
+                                                {opt.totalScore.toFixed(3)}
+                                            </strong>
+                                            <button
+                                                onClick={() => setCalculationModal(opt)}
+                                                className="p-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-400/20 focus:bg-blue-400/30 rounded-full transition-all"
+                                                title="View Calculation Breakdown"
+                                            >
+                                                <Info className="w-5 h-5" />
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -323,6 +333,53 @@ export default function ResultsPage() {
                 </motion.div>
 
             </div>
+
+            {/* Calculation Modal */}
+            {calculationModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 shadow-2xl backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-[#1F2023] border border-white/10 rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200 relative">
+                        <div className="p-6">
+                            <div className="flex justify-between items-start mb-6 border-b border-white/10 pb-4">
+                                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                    <Info className="w-5 h-5 text-blue-400" />
+                                    Math Calculation
+                                </h3>
+                                <button
+                                    onClick={() => setCalculationModal(null)}
+                                    className="p-2 text-white/50 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            <div className="mb-6">
+                                <p className="text-white/70 mb-3 text-base">Weighted score breakdown for <strong className="text-white bg-white/10 px-1.5 py-0.5 rounded">{calculationModal.title}</strong>:</p>
+                                <div className="font-mono text-[15px] bg-black/40 p-5 rounded-xl border border-white/5 leading-[2.5] overflow-x-auto text-white/80 whitespace-nowrap shadow-inner">
+                                    {decision.criteria.map((crit, cIdx) => (
+                                        <span key={crit.id}>
+                                            (<span className="text-blue-300 font-semibold" title="Normalized Score">{calculationModal.normalizedScores[crit.id].toFixed(2)}</span> &times; <span className="text-purple-300 font-semibold" title="Weight">{crit.weight}</span>)
+                                            {cIdx < decision.criteria.length - 1 ? <span className="text-white/40 mx-2">+</span> : <span className="text-white/40 mx-2">=</span>}
+                                        </span>
+                                    ))}
+                                    <strong className="text-green-400 text-lg bg-green-400/10 border border-green-500/20 px-3 py-1 rounded-lg ml-1">
+                                        {calculationModal.totalScore.toFixed(3)}
+                                    </strong>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end pt-4 border-t border-white/10">
+                                <Button
+                                    onClick={() => setCalculationModal(null)}
+                                    variant="secondary"
+                                    className="bg-white/10 hover:bg-white/20 text-white transition-colors"
+                                >
+                                    Close
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
