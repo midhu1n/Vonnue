@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
+import { useLoader } from "@/context/loader-context"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Download, Info, X } from "lucide-react"
@@ -41,6 +42,7 @@ interface EvaluatedOption extends Option {
 export default function ResultsPage() {
     const params = useParams()
     const router = useRouter()
+    const { navigate } = useLoader()
     const decisionId = params?.id as string
 
     const [decision, setDecision] = useState<DecisionData | null>(null)
@@ -221,7 +223,7 @@ export default function ResultsPage() {
         return (
             <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center flex-col gap-4">
                 <p>Decision not found.</p>
-                <Button variant="outline" onClick={() => router.push("/")}>Go Home</Button>
+                <Button variant="outline" onClick={() => navigate("/", { showLoader: false })}>Go Home</Button>
             </div>
         )
     }
@@ -235,17 +237,39 @@ export default function ResultsPage() {
 
             <div className="max-w-6xl mx-auto w-full relative z-10">
 
-                {/* Header */}
-                <div className="flex flex-col items-center justify-center mb-12 border-b border-white/10 pb-6 gap-4 text-center relative">
+                {/* Header Actions */}
+                <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4 w-full px-4">
+                    <div className="flex items-center gap-6">
+                        <Button
+                            variant="ghost"
+                            className="text-white/60 hover:text-white hover:bg-transparent p-0 h-auto flex items-center gap-2 group"
+                            onClick={() => navigate(`/decision/${decisionId}/evaluate`, { showLoader: false })}
+                        >
+                            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                            Back
+                        </Button>
+
+                        <Button
+                            variant="ghost"
+                            className="text-white/60 hover:text-white hover:bg-transparent p-0 h-auto flex items-center gap-2"
+                            onClick={() => navigate(`/decision/${decisionId}/options`, { showLoader: false })}
+                        >
+                            Back to Scoring
+                        </Button>
+                    </div>
+
                     <Button
-                        variant="ghost"
-                        className="text-white/60 hover:text-white p-0 h-auto flex items-center gap-2 absolute left-0 top-0"
-                        onClick={() => router.push(`/decision/${decisionId}/options`)}
+                        variant="default"
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white border border-indigo-500/50 shadow-lg shadow-indigo-500/20 rounded-full px-6 transition-all"
+                        onClick={() => navigate('/', { showLoader: false })}
                     >
-                        <ArrowLeft className="w-4 h-4" />
-                        Back to Scoring
+                        + New Decision
                     </Button>
-                    <div className="mt-8 md:mt-0 md:pt-4">
+                </div>
+
+                {/* Title */}
+                <div className="flex flex-col items-center justify-center mb-12 border-b border-white/10 pb-6 gap-4 text-center relative">
+                    <div className="mt-4 md:mt-0">
                         <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-white capitalize">{decision.query}</h1>
                         <p className="text-white/50 mt-3 text-lg font-medium">Final Ranking</p>
                     </div>

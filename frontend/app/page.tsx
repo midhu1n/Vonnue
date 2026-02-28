@@ -2,16 +2,23 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useLoader } from "@/context/loader-context"
 import { Search } from "lucide-react"
 import { Hero } from "@/components/ui/hero-new"
 
 export default function Home() {
-  const router = useRouter()
+  const { navigate } = useLoader()
   const [query, setQuery] = useState("")
   const [loading, setLoading] = useState(false)
+  const [showError, setShowError] = useState(false)
 
   const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && query.trim()) {
+    if (e.key === "Enter") {
+      if (!query.trim()) {
+        setShowError(true)
+        return
+      }
+
       setLoading(true)
       try {
         const res = await fetch("/api/decisions/", {
@@ -22,7 +29,7 @@ export default function Home() {
 
         if (res.ok) {
           const data = await res.json()
-          router.push(`/decision/${data.id}/options/`)
+          navigate(`/decision/${data.id}/options/`, { showLoader: false })
         } else {
           console.error("Failed to create decision")
           alert("Server error: Could not save the decision. Please ensure the backend is running.")
@@ -58,17 +65,29 @@ export default function Home() {
                 className="flex h-full w-full rounded-full bg-transparent py-3 text-lg outline-none placeholder:text-gray-400 disabled:cursor-not-allowed disabled:opacity-50 dark:placeholder:text-gray-500 text-black dark:text-white"
                 placeholder="e.g. Choose a laptop under budget..."
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                  setQuery(e.target.value)
+                  if (showError) setShowError(false)
+                }}
                 onKeyDown={handleKeyDown}
                 disabled={loading}
                 autoFocus
               />
             </div>
+
+
           </div>
 
-          <p className="text-sm text-gray-500 dark:text-gray-400 animate-fade-up font-medium">
-            Enter to continue
-          </p>
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-sm text-gray-500 dark:text-gray-400 animate-fade-up font-medium">
+              Enter to continue
+            </p>
+            {showError && (
+              <span className="text-sm font-medium text-red-500 text-center">
+                Warning: Please enter a decision to search for.
+              </span>
+            )}
+          </div>
         </div>
       </Hero>
     </>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
+import { useLoader } from "@/context/loader-context"
 import { motion } from "framer-motion"
 import { DotPattern } from "@/components/ui/dot-pattern"
 import { cn } from "@/lib/utils"
@@ -16,7 +17,7 @@ import {
     TableHeader,
     ResizableTableContainer,
 } from "@/components/ui/table"
-import { Trash2, Edit2, Sparkles, Check, ChevronDown, ChevronUp } from "lucide-react"
+import { Trash2, Edit2, Sparkles, Check, ChevronDown, ChevronUp, ArrowLeft } from "lucide-react"
 import {
     Select,
     SelectContent,
@@ -37,6 +38,7 @@ interface Criterion {
 export default function CriteriaPage() {
     const params = useParams()
     const router = useRouter()
+    const { navigate } = useLoader()
     const decisionId = params.id as string
 
     const [criteria, setCriteria] = useState<Criterion[]>([])
@@ -211,7 +213,7 @@ export default function CriteriaPage() {
             })
 
             // Navigate to the next evaluation step
-            router.push(`/decision/${decisionId}/evaluate`)
+            navigate(`/decision/${decisionId}/evaluate`)
 
         } catch (err) {
             console.error("Failed to save criteria", err)
@@ -221,6 +223,16 @@ export default function CriteriaPage() {
 
     return (
         <section className="relative w-full min-h-[100vh] flex flex-col items-center justify-start px-4 md:px-8 py-16 overflow-hidden bg-gradient-to-br from-background to-muted/30">
+            <div className="absolute top-8 left-8 z-50">
+                <Button
+                    variant="ghost"
+                    onClick={() => navigate(`/decision/${decisionId}/options`, { showLoader: false })}
+                    className="group flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all pl-2 pr-4 h-10 rounded-full hover:bg-white/50 dark:hover:bg-gray-800/50 backdrop-blur-sm"
+                >
+                    <ArrowLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
+                    <span className="font-medium">Back</span>
+                </Button>
+            </div>
             <DotPattern className={cn(
                 "[mask-image:radial-gradient(50vw_circle_at_center,white,transparent)]",
             )} />
@@ -463,14 +475,7 @@ export default function CriteriaPage() {
                     </Button>
                 </div>
 
-                {/* Need Help Link */}
-                <div className="flex justify-center pb-8">
-                    <button onClick={() => console.log('Need help clicked')} className="group flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors">
-                        <span className="underline underline-offset-4 decoration-gray-300 dark:decoration-gray-700 group-hover:decoration-current transition-colors">
-                            Need help?
-                        </span>
-                    </button>
-                </div>
+
             </div>
         </section>
     )

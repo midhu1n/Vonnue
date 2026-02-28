@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
+import { useLoader } from "@/context/loader-context"
 import { motion, useMotionValue, useMotionTemplate, useAnimationFrame } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Check, Edit2 } from "lucide-react"
+import { Check, Edit2, ArrowLeft } from "lucide-react"
 import { Source_Sans_3 } from "next/font/google"
 
 const sourceSans = Source_Sans_3({ subsets: ["latin"], weight: ["400", "600", "700"] })
@@ -57,6 +58,7 @@ const GridPatternSVG = ({ offsetX, offsetY, id }: { offsetX: any; offsetY: any; 
 export default function ScoreInputPage() {
     const params = useParams()
     const router = useRouter()
+    const { navigate } = useLoader()
     const decisionId = params.id as string
 
     const [decision, setDecision] = useState<DecisionData | null>(null)
@@ -196,7 +198,7 @@ export default function ScoreInputPage() {
                     if (prev >= 100) {
                         clearInterval(checkCompletion)
                         if (res.ok) {
-                            router.push(`/decision/${decisionId}/results`)
+                            navigate(`/decision/${decisionId}/results`, { showLoader: false })
                         } else {
                             setShowEvaluationOverlay(false)
                             setSaving(false)
@@ -248,6 +250,17 @@ export default function ScoreInputPage() {
             {/* Infinite Grid - base layer */}
             <div className="absolute inset-0 z-0 opacity-[0.05]">
                 <GridPatternSVG offsetX={gridOffsetX} offsetY={gridOffsetY} id="grid-base" />
+            </div>
+
+            <div className="absolute top-8 left-8 z-50">
+                <Button
+                    variant="ghost"
+                    onClick={() => navigate(`/decision/${decisionId}/criteria`, { showLoader: false })}
+                    className="group flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all pl-2 pr-4 h-10 rounded-full hover:bg-white/50 dark:hover:bg-gray-800/50 backdrop-blur-sm"
+                >
+                    <ArrowLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
+                    <span className="font-medium">Back</span>
+                </Button>
             </div>
 
             {/* Infinite Grid - mouse-tracking reveal layer */}
@@ -485,14 +498,7 @@ export default function ScoreInputPage() {
                     </Button>
                 </div>
 
-                {/* Need Help */}
-                <div className="flex justify-center pb-8">
-                    <button onClick={() => console.log('Need help clicked')} className="group flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors">
-                        <span className="underline underline-offset-4 decoration-gray-300 dark:decoration-gray-700 group-hover:decoration-current transition-colors">
-                            Need help?
-                        </span>
-                    </button>
-                </div>
+
             </div>
         </section>
     )

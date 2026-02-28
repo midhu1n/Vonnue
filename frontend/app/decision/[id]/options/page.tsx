@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
+import { useLoader } from "@/context/loader-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ArrowRight, Plus, Edit2, Trash2, Sparkles, X } from "lucide-react"
+import { ArrowRight, ArrowLeft, Plus, Edit2, Trash2, Sparkles, X } from "lucide-react"
 import {
     Table,
     TableBody,
@@ -36,6 +37,7 @@ interface SummaryContent {
 export default function OptionsPage() {
     const params = useParams()
     const router = useRouter()
+    const { navigate } = useLoader()
     const decisionId = params.id as string
 
     const [options, setOptions] = useState<Option[]>([])
@@ -210,6 +212,16 @@ export default function OptionsPage() {
     return (
         <main className="relative w-full min-h-screen overflow-hidden bg-background flex items-center justify-center bg-[url('https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/hero/gridBackground.png')] bg-no-repeat bg-cover bg-center">
             <div className="relative z-10 w-full max-w-4xl space-y-8 animate-fade-up p-8">
+                <div className="absolute top-8 left-8">
+                    <Button
+                        variant="ghost"
+                        onClick={() => navigate('/', { showLoader: false })}
+                        className="group flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all pl-2 pr-4 h-10 rounded-full hover:bg-white/50 dark:hover:bg-gray-800/50 backdrop-blur-sm"
+                    >
+                        <ArrowLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
+                        <span className="font-medium">Back</span>
+                    </Button>
+                </div>
                 <div className="text-center">
                     <h1 className="font-bold text-gray-900 dark:text-white text-balance text-3xl sm:text-4xl md:text-5xl leading-tight sm:leading-tight md:leading-tight lg:leading-tight mb-6">
                         <span className="block text-gray-400 dark:text-gray-500 text-lg md:text-xl mb-2 font-medium tracking-normal">Options for</span>
@@ -368,7 +380,7 @@ export default function OptionsPage() {
                     <div className="mt-8 flex justify-end">
                         <Button
                             size="lg"
-                            onClick={() => router.push(`/decision/${decisionId}/criteria`)}
+                            onClick={() => navigate(`/decision/${decisionId}/criteria`)}
                             disabled={options.length < 2}
                             className="h-14 px-8 text-lg bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 shadow-xl transition-all hover:scale-105"
                         >
