@@ -126,6 +126,7 @@ If a user compares laptops with 256GB, 512GB, and 1,000GB of storage, but mistak
 The core formula for Min-Max is `(Value - Min) / (Max - Min)`. If all options are identical (e.g., every laptop costs exactly $1,000), `Max - Min` becomes `0`.
 *   **Our Solution:** The system explicitly checks if the range is zero. If it is, the engine gracefully bypasses the complex calculation and awards a uniform `1.0` score to all options for that category, preventing application crashes.
 
+
 ## 6) How to run the project
 
 ### Tech Stack
@@ -246,3 +247,43 @@ While the core architecture is robust and functional, there are several key area
 ### 4. UI/UX & AI Refinements
 *   **Generative AI Proactivity:** Deepen the integration of the AI Context Service. Move beyond simply classifying criteria as "Cost/Benefit" and allow the AI to proactively suggest related, industry-standard criteria based on the user's domain (e.g., dynamically suggesting "Weight" and "Battery Life" as soon as a user creates a "Laptop" decision model).
 *   **Interactive Interfaces & Data Exports:** Continually polish the user interface with sophisticated interactive elements (like drag-and-drop prioritization). Enhance the data deliverables by allowing users to export the raw, mathematically normalized matrices as raw numeric datasets (CSV/Excel) alongside the visual PDF reports.
+
+## 8) API Keys & Environment Setup
+
+This project uses the **Google Gemini API** for the AI criteria classifier feature. To avoid exposing secret keys publicly, **no `.env` file is committed to the repository**.
+
+Instead, a `.env.example` template file is included in the `backend/` directory, showing which keys are needed:
+
+```
+# backend/.env.example
+GEMINI_API_KEY=your_gemini_api_key_here
+
+```
+
+### How to configure your keys
+
+1. Copy the example file to create your own local `.env`:
+
+   **Windows:**
+   ```cmd
+   copy backend\.env.example backend\.env
+   ```
+   **macOS / Linux:**
+   ```bash
+   cp backend/.env.example backend/.env
+   ```
+
+2. Open `backend/.env` in any text editor and replace the placeholder values with your real API keys:
+   ```
+   GEMINI_API_KEY=your_actual_gemini_key_here
+   ```
+
+3. Save the file. The backend will automatically load it on startup.
+
+> Get a **free** Gemini API key at: [https://aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
+>
+>
+>
+> ✅ **Without a key**, the app still runs fully — only the AI TypeFocus suggestion feature will be silently disabled.
+
+---
