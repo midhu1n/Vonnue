@@ -67,23 +67,6 @@ Without this classification, the user would have to manually toggle every single
 
 *   **Manual Override Always Available:** The AI suggestion is never enforced. The user interface provides an explicit toggle on every criterion row. If the AI misclassifies a criterion (e.g., labelling "Experience" as "Cost" instead of "Benefit"), the user can instantly and permanently override it with a single click. **The user always retains full mathematical control.**
 
-*   **API Key is Personal — Not Included in the Repository:** For security reasons, the Gemini API key used during development is stored exclusively in a local `.env` file on the developer's machine. This file is listed in `.gitignore` and is **never pushed to the GitHub repository**. It is strongly discouraged to share personal API keys in any public or shared repository.
-
-**For Reviewers & Testers — How to Enable the AI Feature:**
-
-To test the AI criteria classification feature locally, you must supply your own Gemini API key. Follow these steps:
-
-1. Obtain a **free** Gemini API key at: [https://aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
-2. In the `backend/` directory, copy the example env file:
-   ```bash
-   cp .env.example .env
-   ```
-3. Open `backend/.env` and paste your key:
-   ```
-   GEMINI_API_KEY=your_actual_key_here
-   ```
-4. Restart the Django backend server — the AI feature will now be active.
-
 > Full setup instructions are documented in **Section 6: How to run the project** of this README.
 
 *   **Trade-off Summary:** Relying on an external API introduces a small latency (~0.5s) during the criteria entry step and creates a soft dependency on a third-party service. However, the UX improvement is significant, and the system is architecturally designed to degrade gracefully — the core decision engine continues to function perfectly even when the AI service is unavailable.
