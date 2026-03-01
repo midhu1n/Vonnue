@@ -50,9 +50,44 @@ Before any math occurs, the system intercepts user input (Criteria, Options, Sco
 *   **Design Decision:** We implemented a strict validation flow *before* data reaches the engine. If a user enters incomplete matrices or weights that exceed `1.0`, the system blocks the request.
 *   **Trade-off:** This introduces more frontend error-handling complexity and slightly higher friction for the user, but it guarantees that the mathematical engine will never crash due to `NaN` or `null` constraints.
 
-### B. The Standardization Flow (AI Context Service)
-*   **Design Decision:** We integrated an external LLM API as an "AI Context Service" to automatically classify user criteria as a "Benefit" or a "Cost". 
-*   **Trade-off:** Relying on an external API introduces latency during data entry and creates a dependency on a third-party service. However, it massively streamlines the user experience. To mitigate the risk of AI hallucination, the service acts only as a *recommendation engine*, providing a manual override toggle in the UI so the user always retains ultimate control over the mathematical polarity.
+### B. The Standardization Flow (AI Context Service) — Role & Limitations
+
+**Role of AI in this System:**
+
+The application integrates the **Google Gemini API** as a lightweight, assistive *AI Context Service* — strictly limited to two specific task: automatically classifying a user-defined criterion as either a **"Benefit"** type (where a higher value is better, e.g., Battery Life) or a **"Cost"** type (where a lower value is better, e.g., Price). This classification — called **TypeFocus** — is presented to the user as an intelligent suggestion the moment they name a criterion, significantly reducing manual configuration effort.It gives suggestions to user for eg when he enters choose a laptop ai can list a few laptop for user,it would be up to him to whether accept or reject the suggestions
+
+> **Important:** The AI does **not** make decisions, compute scores, or determine winners. All mathematical calculations — normalization, weighting, and ranking — are executed by a fully deterministic, custom-built algorithm (the Weighted Sum Model). The AI's only involvement is providing a polarity hint for one input field.
+
+**Why AI was used here:**
+Without this classification, the user would have to manually toggle every single criterion as Benefit or Cost — a tedious step most users misunderstand. The AI infers the likely polarity from plain English (e.g., typing "Price" → AI suggests "Cost") in milliseconds, making the experience feel intelligent and frictionless.
+
+**Limitations:**
+
+*   **Free Tier Quota Exhaustion:** This system uses the **Gemini API on the free tier**, which has a limited request quota per minute and per day. Under heavy or repeated testing, the quota may be exhausted quickly, causing the TypeFocus suggestion to temporarily stop working. The application handles this gracefully — it falls back silently and lets the user classify the criterion manually without crashing.
+
+*   **Manual Override Always Available:** The AI suggestion is never enforced. The user interface provides an explicit toggle on every criterion row. If the AI misclassifies a criterion (e.g., labelling "Experience" as "Cost" instead of "Benefit"), the user can instantly and permanently override it with a single click. **The user always retains full mathematical control.**
+
+*   **API Key is Personal — Not Included in the Repository:** For security reasons, the Gemini API key used during development is stored exclusively in a local `.env` file on the developer's machine. This file is listed in `.gitignore` and is **never pushed to the GitHub repository**. It is strongly discouraged to share personal API keys in any public or shared repository.
+
+**For Reviewers & Testers — How to Enable the AI Feature:**
+
+To test the AI criteria classification feature locally, you must supply your own Gemini API key. Follow these steps:
+
+1. Obtain a **free** Gemini API key at: [https://aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
+2. In the `backend/` directory, copy the example env file:
+   ```bash
+   cp .env.example .env
+   ```
+3. Open `backend/.env` and paste your key:
+   ```
+   GEMINI_API_KEY=your_actual_key_here
+   ```
+4. Restart the Django backend server — the AI feature will now be active.
+
+> Full setup instructions are documented in **Section 6: How to run the project** of this README.
+
+*   **Trade-off Summary:** Relying on an external API introduces a small latency (~0.5s) during the criteria entry step and creates a soft dependency on a third-party service. However, the UX improvement is significant, and the system is architecturally designed to degrade gracefully — the core decision engine continues to function perfectly even when the AI service is unavailable.
+
 
 ### C. The Decision Engine: Normalization & Aggregation
 The core of the system operates in an isolated environment.
@@ -111,58 +146,120 @@ The core formula for Min-Max is `(Value - Min) / (Max - Min)`. If all options ar
 ## 6) How to run the project
 
 ### Tech Stack
-- **Frontend:** Next.js (React 18), Tailwind CSS, Shadcn UI
-- **Backend:** Django REST Framework, SQLite
+- **Frontend:** Next.js 14 (React 18), Tailwind CSS, Shadcn UI — runs on `http://localhost:3000`
+- **Backend:** Django REST Framework, SQLite — runs on `http://127.0.0.1:8000`
 
 ### Prerequisites
-- Node.js (v18+ recommended)
-- Python (v3.10+ recommended)
-- `npm` or `yarn` (for the frontend)
+Make sure the following are installed on your machine before starting:
+- [Node.js](https://nodejs.org/) (v18+ recommended) — for the frontend
+- [Python](https://www.python.org/) (v3.10+ recommended) — for the backend
+- `npm` — comes bundled with Node.js
 
-### Setting up the Backend
+> **Note:** You will need to run the **backend and frontend simultaneously** in two separate terminal windows. The frontend fetches data from the backend API, so both must be running at the same time.
+
+---
+
+### Terminal 1 — Setting up the Backend
+
 1. Navigate into the `backend` directory:
    ```bash
    cd backend
    ```
-2. Create and activate a virtual environment (optional but recommended):
+
+2. Create and activate a virtual environment:
    ```bash
    # Create virtual environment
    python -m venv venv
-   
-   # Activate (Windows)
+
+   # Activate on Windows
    venv\Scripts\activate
-   
-   # Activate (macOS/Linux)
+
+   # Activate on macOS/Linux
    source venv/bin/activate
    ```
-3. Install dependencies (e.g., `django`, `djangorestframework`, `django-cors-headers`):
+
+3. Install Python dependencies:
    ```bash
-   pip install django djangorestframework django-cors-headers
+   pip install -r requirements.txt
    ```
-4. Apply database migrations:
+   > If `requirements.txt` is missing, install manually:
+   > ```bash
+   > pip install django djangorestframework django-cors-headers google-generativeai python-dotenv openai
+   > ```
+
+4. **Configure API Keys** *(Required for AI criteria classifier feature):*
+
+   **Windows:**
+   ```cmd
+   copy .env.example .env
+   ```
+   **macOS / Linux:**
+   ```bash
+   cp .env.example .env
+   ```
+   Then open `backend/.env` in any text editor and paste your Gemini API key:
+   ```
+   GEMINI_API_KEY=your_actual_gemini_key_here
+   ```
+   > Get a **free** Gemini API key at: [https://aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
+   >
+   > **Without this key**, the app still runs fully — only the AI TypeFocus suggestion feature will be silently disabled.
+
+5. Apply database migrations:
    ```bash
    python manage.py migrate
    ```
-5. Run the development server:
+
+6. Start the backend server:
    ```bash
    python manage.py runserver
    ```
-   The backend API will be available at [http://127.0.0.1:8000/](http://127.0.0.1:8000/).
+   ✅ Backend is now running at **[http://127.0.0.1:8000](http://127.0.0.1:8000)**
 
-### Setting up the Frontend
-1. Open a new terminal and navigate to the `frontend` directory:
+---
+
+### Terminal 2 — Setting up the Frontend
+
+1. Open a **new terminal window** and navigate to the `frontend` directory:
    ```bash
    cd frontend
    ```
-2. Install the JavaScript dependencies:
+
+2. Install JavaScript dependencies:
    ```bash
    npm install
    ```
-3. Run the development server:
+
+3. Start the frontend development server:
    ```bash
    npm run dev
    ```
-   The Next.js frontend will be available at [http://localhost:3000](http://localhost:3000).
+   ✅ Frontend is now running at **[http://localhost:3000](http://localhost:3000)**
+
+---
+
+### ✅ You're ready!
+Open **[http://localhost:3000](http://localhost:3000)** in your browser to use the Decision Companion System. Make sure **both terminals are running** — the frontend will not function correctly without the backend active.
+
+
 
 ## 7) What you would improve with more time
-*(To be updated as the project evolves)*
+
+While the core architecture is robust and functional, there are several key areas I would prioritize for future enhancement to transform this prototype into an enterprise-grade MCDA platform:
+
+### 1. Algorithmic Enhancements 
+*   **Advanced MCDA Models:** Expand the mathematical engine to support specialized decision algorithms alongside the current Weighted Sum Model (WSM), such as **TOPSIS** (Technique for Order of Preference by Similarity to Ideal Solution), **AHP** (Analytic Hierarchy Process) for pairwise comparisons, and **WPM** (Weighted Product Model).
+*   **Sensitivity Analysis:** Add a mathematical tracing feature that slightly tweaks criteria weights automatically. This would show users how sensitive the final ranking is to minor preference changes (e.g., "If you cared 5% more about Price, Option B would win over Option A").
+
+### 2. State & Data Persistence
+*   **Databases & User Authentication:** Implement a robust relational database schema (e.g., PostgreSQL) tied to secure user authentication. This would persistently store individual user histories, custom decision models, and past activities—allowing users to seamlessly revisit, clone, and modify historic decisions.
+*   **Collaborative Decision-Making:** Extend the data model to allow multiple team members to concurrently weigh in on a singular matrix, systematically averaging their weights or scores to calculate a mathematically optimal group consensus.
+
+### 3. Fortified Validation & Edge Case Handling
+*   **Type & Range Hardening:** Implement exhaustive backend type-checking to ensure all scores and weights are strictly numerical, alongside deep programmatic constraints guaranteeing that no anomalous requests bypass the `[0.0, 1.0]` normalized boundary.
+*   **Completeness Checks:** Systematize rigorous validation pipelines that verify every single option intersection has a recorded score for every criterion prior to enabling the calculation engine. This reliably prevents undefined behavior in sparse matrices.
+*   **Expanded Edge-Case Discovery:** Dedicated time to perform exhaustive destructive testing, actively hunting to uncover and mitigate niche calculation edge cases and limits of extreme data asymmetry.
+
+### 4. UI/UX & AI Refinements
+*   **Generative AI Proactivity:** Deepen the integration of the AI Context Service. Move beyond simply classifying criteria as "Cost/Benefit" and allow the AI to proactively suggest related, industry-standard criteria based on the user's domain (e.g., dynamically suggesting "Weight" and "Battery Life" as soon as a user creates a "Laptop" decision model).
+*   **Interactive Interfaces & Data Exports:** Continually polish the user interface with sophisticated interactive elements (like drag-and-drop prioritization). Enhance the data deliverables by allowing users to export the raw, mathematically normalized matrices as raw numeric datasets (CSV/Excel) alongside the visual PDF reports.

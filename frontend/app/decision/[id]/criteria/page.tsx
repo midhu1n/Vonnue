@@ -273,10 +273,15 @@ export default function CriteriaPage() {
                     <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl mb-4 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-gray-200 dark:to-white">
                         What matters most?
                     </h1>
-                    <p className="text-lg text-muted-foreground max-w-2xl mt-2">
+                    <p className="text-lg text-muted-foreground max-w-2xl mt-2 mb-6">
                         <strong className="text-xl text-indigo-600 dark:text-indigo-400 font-bold tracking-wide">Prioritize What Matters.</strong>
                         <span className="opacity-90 ml-2">Define your attributes and calibrate their impact.</span>
                     </p>
+
+                    <div className="bg-indigo-50 border border-indigo-200 text-indigo-800 rounded-lg p-4 max-w-3xl text-sm md:text-base shadow-sm">
+                        <strong className="font-semibold block mb-1 text-indigo-900">💡 Tip: Setting Up Attributes</strong>
+                        <span className="font-semibold">Assign more weight</span> to the attributes you prefer the most, and ensure the <span className="font-semibold">total weight sums to exactly 1.0</span>. Also, remember to select the correct <span className="font-semibold">Type Focus</span> (Benefit or Cost) for each criteria!
+                    </div>
                 </div>
 
                 <div className="border-2 border-black dark:border-white rounded-xl mb-6 overflow-hidden bg-white/60 dark:bg-black/60 backdrop-blur-xl shadow-[8px_8px_0px_rgba(0,0,0,0.1)] dark:shadow-[8px_8px_0px_rgba(255,255,255,0.05)] ring-1 ring-black/5 dark:ring-white/5">

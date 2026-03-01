@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useLoader } from "@/context/loader-context"
 import { Search } from "lucide-react"
 import { Hero } from "@/components/ui/hero-new"
+import { HowItWorks } from "@/components/ui/how-it-works"
 
 export default function Home() {
   const { navigate } = useLoader()
@@ -47,8 +48,14 @@ export default function Home() {
     <>
 
       <Hero
-        title="Decision Companion System"
-        subtitle="Make smarter decisions with AI-powered assistance."
+        title="Evalora"
+        subtitle={
+          <span className="flex flex-col md:flex-row items-center justify-center gap-2">
+            <span>Evaluate. Compare. Decide.</span>
+            <span className="hidden md:inline text-gray-400">|</span>
+            <span className="text-indigo-600 dark:text-indigo-400 font-medium">A smart decision companion system</span>
+          </span>
+        }
       >
         <div className="flex flex-col items-center gap-6 mt-4">
 
@@ -90,6 +97,8 @@ export default function Home() {
           </div>
         </div>
       </Hero>
+      {/* How it works Section */}
+      <HowItWorks />
     </>
   )
 }

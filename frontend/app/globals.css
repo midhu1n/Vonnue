@@ -113,3 +113,14 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  @page {
+    margin: 0; /* This removes the default browser header and footer */
+  }
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    margin: 1cm; /* Adds back a sensible margin for the actual content */
+  }
+}

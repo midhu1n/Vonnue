@@ -1,12 +1,14 @@
 "use client"
 
-import { ChevronRight } from "lucide-react"
+import { ChevronRight, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
+
+import { Component as InteractiveGlobe } from "@/components/interactive-globe"
 
 interface HeroProps {
     eyebrow?: string
     title: string
-    subtitle: string
+    subtitle: React.ReactNode
     ctaLabel?: string
     ctaHref?: string
     children?: React.ReactNode
@@ -23,12 +25,18 @@ export function Hero({
     return (
         <section
             id="hero"
-            className="relative mx-auto w-full pt-40 px-6 text-center md:px-8 
+            className="relative isolate mx-auto w-full pt-40 px-6 text-center md:px-8 
       min-h-[calc(100vh-40px)] overflow-hidden 
-      bg-[linear-gradient(to_bottom,#fff,#ffffff_50%,#e8e8e8_88%)]  
-      dark:bg-[linear-gradient(to_bottom,#000,#0000_30%,#898e8e_78%,#ffffff_99%_50%)] 
       rounded-b-xl"
         >
+            {/* Base Background */}
+            <div className="absolute inset-0 -z-30 bg-[linear-gradient(to_bottom,#fff,#ffffff_50%,#e8e8e8_88%)] dark:bg-[linear-gradient(to_bottom,#000,#0000_30%,#898e8e_78%,#ffffff_99%_50%)]" />
+
+            {/* Interactive Globe */}
+            <div className="absolute -bottom-10 -left-10 md:bottom-10 md:left-10 w-[300px] h-[300px] z-10 flex items-center justify-center opacity-70 dark:opacity-90">
+                <InteractiveGlobe />
+            </div>
+
             {/* Grid BG */}
             <div
                 className="absolute -z-10 inset-0 opacity-80 h-[600px] w-full 
@@ -100,9 +108,18 @@ export function Hero({
                 </div>
             )}
 
+            {/* Scroll Indicator */}
+            <div
+                className="absolute bottom-12 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center justify-center gap-1 cursor-pointer opacity-50 hover:opacity-100 transition-opacity"
+                onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+            >
+                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-1">How It Works</span>
+                <ChevronDown className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+            </div>
+
             {/* Bottom Fade */}
             <div
-                className="animate-fade-up relative mt-32 opacity-0 [perspective:2000px] 
+                className="animate-fade-up relative mt-32 opacity-0 [perspective:2000px] pointer-events-none
         after:absolute after:inset-0 after:z-50 
         after:[background:linear-gradient(to_top,hsl(var(--background))_10%,transparent)]"
             />

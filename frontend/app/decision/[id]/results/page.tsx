@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import { useLoader } from "@/context/loader-context"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Download, Info, X } from "lucide-react"
+import { ArrowLeft, Download, Info, X, ChevronRight } from "lucide-react"
 
 interface Score {
     id: string
@@ -229,16 +229,73 @@ export default function ResultsPage() {
     }
 
     return (
-        <div className="min-h-[100dvh] w-[100vw] bg-[#1F2023] text-gray-100 font-sans p-4 md:p-8 flex flex-col pt-32 h-full relative overflow-hidden">
-            {/* Ambient Background Glows */}
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-[#9b87f5]/20 blur-[120px] pointer-events-none" />
-            <div className="absolute top-[20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-[-10%] left-[20%] w-[40%] h-[40%] rounded-full bg-orange-500/10 blur-[120px] pointer-events-none" />
+        <div className="min-h-[100dvh] w-full bg-[#1F2023] print:bg-white text-gray-100 print:text-black font-sans p-4 md:p-8 print:p-0 flex flex-col pt-32 print:pt-0 h-full relative overflow-hidden print:overflow-visible group/page">
 
-            <div className="max-w-6xl mx-auto w-full relative z-10">
+            {/* Movable Sidebar Indicator */}
+            <div className="fixed left-0 top-1/2 -translate-y-1/2 z-40 p-2 bg-indigo-600/20 backdrop-blur-md rounded-r-xl border border-indigo-500/30 border-l-0 text-white opacity-60 group-hover/page:opacity-0 transition-opacity duration-300 print:hidden cursor-pointer pointer-events-none">
+                <ChevronRight className="w-6 h-6 animate-pulse" />
+            </div>
+
+            {/* Movable Sidebar */}
+            <div className="fixed left-0 top-0 h-full w-64 bg-[#141517]/95 backdrop-blur-xl border-r border-white/10 z-50 transform -translate-x-full hover:translate-x-0 transition-transform duration-300 ease-in-out print:hidden flex flex-col pt-8 pb-4 px-4 shadow-[10px_0_30px_rgba(0,0,0,0.5)] group-hover/page:-translate-x-[calc(100%-12px)] [&:hover]:!-translate-x-0">
+                <div className="absolute right-[-12px] top-0 bottom-0 w-3 cursor-ew-resize opacity-0" /> {/* Hit area for hover */}
+                <div className="flex items-center gap-2 mb-10 px-2">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
+                        <span className="font-bold text-lg">D</span>
+                    </div>
+                    <span className="font-bold text-lg tracking-wide">Decision Pro</span>
+                </div>
+
+                <div className="flex flex-col gap-2 flex-1">
+                    <span className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2 px-2">Navigation</span>
+                    <Button
+                        variant="ghost"
+                        className="w-full justify-start text-white/70 hover:text-white hover:bg-white/10"
+                        onClick={() => navigate(`/decision/${decisionId}/results`, { showLoader: false })}
+                    >
+                        Results
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        className="w-full justify-start text-white/70 hover:text-white hover:bg-white/10"
+                        onClick={() => navigate(`/decision/${decisionId}/analysis`, { showLoader: false })}
+                    >
+                        Analysis
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        className="w-full justify-start text-white/70 hover:text-white hover:bg-white/10 mt-4"
+                        onClick={() => navigate('/', { showLoader: false })}
+                    >
+                        New Decision
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        className="w-full justify-start text-white/70 hover:text-white hover:bg-white/10"
+                        onClick={() => navigate(`/decision/${decisionId}/options`, { showLoader: false })}
+                    >
+                        Edit Options
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        className="w-full justify-start text-white/70 hover:text-white hover:bg-white/10"
+                        onClick={() => navigate(`/decision/${decisionId}/evaluate`, { showLoader: false })}
+                    >
+                        Edit Scores
+                    </Button>
+                </div>
+
+
+            </div>
+            {/* Ambient Background Glows */}
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-[#9b87f5]/20 blur-[120px] pointer-events-none print:hidden" />
+            <div className="absolute top-[20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none print:hidden" />
+            <div className="absolute bottom-[-10%] left-[20%] w-[40%] h-[40%] rounded-full bg-orange-500/10 blur-[120px] pointer-events-none print:hidden" />
+
+            <div className="max-w-6xl mx-auto w-full print:max-w-[700px] relative z-10">
 
                 {/* Header Actions */}
-                <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4 w-full px-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4 w-full px-4 print:hidden">
                     <div className="flex items-center gap-6">
                         <Button
                             variant="ghost"
@@ -268,10 +325,10 @@ export default function ResultsPage() {
                 </div>
 
                 {/* Title */}
-                <div className="flex flex-col items-center justify-center mb-12 border-b border-white/10 pb-6 gap-4 text-center relative">
+                <div className="flex flex-col items-center justify-center mb-12 border-b border-white/10 print:border-black/10 pb-6 gap-4 text-center relative">
                     <div className="mt-4 md:mt-0">
-                        <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-white capitalize">{decision.query}</h1>
-                        <p className="text-white/50 mt-3 text-lg font-medium">Final Ranking</p>
+                        <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-white print:text-black capitalize">{decision.query}</h1>
+                        <p className="text-white/50 print:text-black/50 mt-3 text-lg font-medium">Final Ranking</p>
                     </div>
                 </div>
 
@@ -281,29 +338,29 @@ export default function ResultsPage() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
-                    className="overflow-x-auto bg-[#1F2023] border border-[#444444] shadow-[0_8px_30px_rgba(0,0,0,0.24)] rounded-2xl md:rounded-3xl"
+                    className="overflow-x-auto print:overflow-visible bg-[#1F2023] print:bg-white border border-[#444444] print:border-gray-200 shadow-[0_8px_30px_rgba(0,0,0,0.24)] print:shadow-none rounded-2xl md:rounded-3xl print:rounded-none"
                 >
-                    <table className="w-full text-left border-collapse whitespace-nowrap">
+                    <table className="w-full text-left border-collapse whitespace-nowrap print:whitespace-normal print:break-words print:text-xs">
                         <thead>
-                            <tr className="border-b border-white/10 text-white/50 text-sm divide-x divide-white/10">
-                                <th className="p-4 md:p-6 font-medium text-center w-16">Rank</th>
-                                <th className="p-4 md:p-6 font-medium">Option</th>
+                            <tr className="border-b border-white/10 print:border-gray-200 text-white/50 print:text-gray-500 text-sm divide-x divide-white/10 print:divide-gray-200">
+                                <th className="p-4 md:p-6 print:p-2 font-medium text-center w-16 print:w-auto">Rank</th>
+                                <th className="p-4 md:p-6 print:p-2 font-medium">Option</th>
                                 {decision.criteria.map(crit => (
-                                    <th key={crit.id} className="p-4 md:p-6 font-medium">
+                                    <th key={crit.id} className="p-4 md:p-6 print:p-2 font-medium">
                                         {crit.name}<br />
-                                        <span className="text-xs text-white/30">(Norm) W:{crit.weight}</span>
+                                        <span className="text-xs text-white/30 print:text-gray-400">(Norm) W:{crit.weight}</span>
                                     </th>
                                 ))}
-                                <th className="p-4 md:p-6 font-medium text-white">Total Weighted Score</th>
+                                <th className="p-4 md:p-6 print:p-2 font-medium text-white print:text-black">Total Weighted Score</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/10">
+                        <tbody className="divide-y divide-white/10 print:divide-gray-200">
                             {evaluatedOptions.map((opt, idx) => (
-                                <tr key={opt.id} className="hover:bg-white/[0.02] transition-colors divide-x divide-white/10">
-                                    <td className="p-4 md:p-6 font-bold text-center text-white/80">
+                                <tr key={opt.id} className="hover:bg-white/[0.02] print:hover:bg-transparent transition-colors divide-x divide-white/10 print:divide-gray-200">
+                                    <td className="p-4 md:p-6 print:p-2 font-bold text-center text-white/80 print:text-gray-700">
                                         {idx + 1}
                                     </td>
-                                    <td className="p-4 md:p-6 font-semibold text-white">
+                                    <td className="p-4 md:p-6 print:p-2 font-semibold text-white print:text-black">
                                         <div className="flex flex-col gap-1.5 items-start">
                                             <span>{opt.title}</span>
                                             {idx === 0 && (
@@ -314,18 +371,18 @@ export default function ResultsPage() {
                                         </div>
                                     </td>
                                     {decision.criteria.map(crit => (
-                                        <td key={crit.id} className="p-4 md:p-6 text-white/80">
+                                        <td key={crit.id} className="p-4 md:p-6 print:p-2 text-white/80 print:text-gray-700">
                                             {opt.normalizedScores[crit.id].toFixed(2)}
                                         </td>
                                     ))}
-                                    <td className="p-4 md:p-6 font-mono text-sm text-white/60">
+                                    <td className="p-4 md:p-6 print:p-2 font-mono text-sm text-white/60 print:text-gray-600">
                                         <div className="flex items-center gap-3">
-                                            <strong className="text-white text-base">
+                                            <strong className="text-white print:text-black text-base">
                                                 {opt.totalScore.toFixed(3)}
                                             </strong>
                                             <button
                                                 onClick={() => setCalculationModal(opt)}
-                                                className="p-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-400/20 focus:bg-blue-400/30 rounded-full transition-all"
+                                                className="p-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-400/20 focus:bg-blue-400/30 rounded-full transition-all print:hidden"
                                                 title="View Calculation Breakdown"
                                             >
                                                 <Info className="w-5 h-5" />
@@ -338,16 +395,16 @@ export default function ResultsPage() {
                     </table>
 
                     {/* Winner Explanation Alert */}
-                    <div className="p-4 md:p-6 border-t border-[#444444] bg-[#1F2023] rounded-b-2xl md:rounded-b-3xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div className="p-4 md:p-6 border-t border-[#444444] print:border-gray-200 bg-[#1F2023] print:bg-white rounded-b-2xl md:rounded-b-3xl print:rounded-none flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                         <div className="flex items-start gap-3 w-full md:w-auto">
                             <Info className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
-                            <p className="text-white/90 leading-relaxed font-medium">
+                            <p className="text-white/90 print:text-gray-800 leading-relaxed font-medium">
                                 {generateExplanation()}
                             </p>
                         </div>
                         <Button
                             variant="secondary"
-                            className="bg-white/10 hover:bg-white/20 text-white ml-4 shrink-0 transition-colors"
+                            className="bg-white/10 hover:bg-white/20 text-white ml-4 shrink-0 transition-colors print:hidden"
                             onClick={() => window.print()}
                         >
                             <Download className="w-4 h-4 mr-2" />
