@@ -159,53 +159,64 @@ export default function ResultsPage() {
         if (evaluatedOptions.length === 1) return `The ${evaluatedOptions[0].title} is the clear winner as it's the only option!`
 
         const winner = evaluatedOptions[0]
-        const runnerUp = evaluatedOptions[1]
+        const others = evaluatedOptions.slice(1)
+        const criteria = decision!.criteria
 
-        let bestCritForWinner: Criterion | null = null
-        let maxWinnerAdvantage = -1
+        // --- Total Weighted Score comparison ---
+        const scoreComparisons = others.map(o =>
+            `${o.title} (${o.totalScore.toFixed(3)})`
+        ).join(", ")
 
-        let bestCritForRunnerUp: Criterion | null = null
-        let maxRunnerUpAdvantage = -1
+        let explanation = `${winner.title} is recommended with a total weighted score of ${winner.totalScore.toFixed(3)}, compared to ${scoreComparisons}. `
 
-        for (const crit of decision!.criteria) {
-            const wScore = winner.normalizedScores[crit.id] * crit.weight
-            const rScore = runnerUp.normalizedScores[crit.id] * crit.weight
+        // --- Attributes where winner is better than ALL others ---
+        const winnerStrongerCriteria: string[] = []
+        // --- Attributes where at least one other option beats the winner ---
+        const winnerWeakerDetails: string[] = []
 
-            // Look at raw normalized scores (0 to 1) for the text description
+        for (const crit of criteria) {
             const wNorm = winner.normalizedScores[crit.id]
-            const rNorm = runnerUp.normalizedScores[crit.id]
+            const weightPct = Math.round(crit.weight * 100)
 
-            const diff = wScore - rScore
+            let winnerBetterThanAll = true
+            const betterOthers: string[] = []
 
-            if (diff > maxWinnerAdvantage) {
-                maxWinnerAdvantage = diff
-                bestCritForWinner = crit
+            for (const other of others) {
+                const oNorm = other.normalizedScores[crit.id]
+                if (oNorm > wNorm) {
+                    winnerBetterThanAll = false
+                    betterOthers.push(`${other.title} scored ${oNorm.toFixed(2)}`)
+                } else if (oNorm === wNorm) {
+                    winnerBetterThanAll = false
+                }
             }
 
-            // Negative diff means runner up did better here
-            if (diff < 0 && Math.abs(diff) > maxRunnerUpAdvantage) {
-                maxRunnerUpAdvantage = Math.abs(diff)
-                bestCritForRunnerUp = crit
+            if (winnerBetterThanAll) {
+                winnerStrongerCriteria.push(`'${crit.name}' (Weight: ${weightPct}%, Score: ${wNorm.toFixed(2)})`)
+            }
+
+            if (betterOthers.length > 0) {
+                winnerWeakerDetails.push(
+                    `In '${crit.name}' (Weight: ${weightPct}%), ${winner.title} scored ${wNorm.toFixed(2)} but ${betterOthers.join(" and ")}`
+                )
             }
         }
 
-        if (!bestCritForWinner) {
-            return `Result: The ${winner.title} narrowly beats the ${runnerUp.title} with a solid overall performance.`
+        // Winner's strengths
+        if (winnerStrongerCriteria.length > 0) {
+            explanation += `${winner.title} outperformed all other options in: ${winnerStrongerCriteria.join("; ")}. `
         }
 
-        const wScoreText = winner.normalizedScores[bestCritForWinner!.id].toFixed(2)
-        const weightText = Math.round(bestCritForWinner!.weight * 100)
-
-        let explanation = `${winner.title} is recommended because it excelled in '${bestCritForWinner!.name}' (Weight: ${weightText}%) where it scored ${wScoreText}. `
-
-        if (bestCritForRunnerUp) {
-            const runnerWeightText = Math.round(bestCritForRunnerUp.weight * 100)
-            explanation += `Although ${runnerUp.title} was better in '${bestCritForRunnerUp.name}' (Weight: ${runnerWeightText}%), the high importance you placed on '${bestCritForWinner!.name}' outweighed those benefits. `
+        // Where others did better
+        if (winnerWeakerDetails.length > 0) {
+            explanation += `However, some options performed better than ${winner.title} in certain areas: ${winnerWeakerDetails.join(". ")}. `
         }
 
-        if (evaluatedOptions.length > 2) {
-            const remaining = evaluatedOptions.slice(2).map(o => o.title).join(", ")
-            explanation += `Meanwhile, other options like ${remaining} fell significantly behind due to lower comprehensive scoring.`
+        // Closing: why winner still won overall
+        if (winnerWeakerDetails.length > 0) {
+            explanation += `Despite these areas, ${winner.title}'s strong performance in higher-weighted criteria resulted in the highest overall weighted score.`
+        } else {
+            explanation += `${winner.title} dominated across all criteria, earning the top recommendation.`
         }
 
         return explanation
